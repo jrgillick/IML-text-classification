@@ -20,8 +20,10 @@
 {% block scripts %}
   <script>
     $(document).ready(function () {
+      classifier_code = new URL(window.location.href).searchParams.get("classifier_code")
+      ajax_string = '/api/data?classifier_code='.concat(classifier_code)
       $('#data').DataTable({
-        ajax: '/api/data',
+        ajax: ajax_string,
         serverSide: true,
         columns: [
           {data: 'id'},

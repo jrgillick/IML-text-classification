@@ -1,5 +1,5 @@
 from flask import Flask, render_template, request
-from flask import session, redirect, url_for
+from flask import redirect, url_for
 from flask_sqlalchemy import SQLAlchemy
 import secrets
 
@@ -8,14 +8,19 @@ app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///db.sqlite'
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 db = SQLAlchemy(app)
 
+from sqlalchemy import Column, ForeignKey, Integer, Table
+from sqlalchemy.orm import relationship
+
 
 class Artwork(db.Model):
+  #__tablename__ = "artwork"
   id = db.Column(db.Integer, primary_key=True)
   description = db.Column(db.String(256), index=True)
   labelA = db.Column(db.String(256), index=True)
   labelB = db.Column(db.String(256), index=True)
   predicted = db.Column(db.Integer, index=True)
   hide = db.Column(db.Integer, index=True)
+  labels = db.relationship("Label", backref='artwork', lazy=True)
 
   def to_dict(self):
     return {
@@ -27,21 +32,46 @@ class Artwork(db.Model):
       'hide': self.hide
     }
 
-class Session(db.Model):
-  sessionID = db.Column(db.String(256), index=True)
+class Classifier(db.Model):
+  #__tablename__ = "classifier"
+  id = db.Column(db.Integer, primary_key=True)
+  classifier_code = db.Column(db.String(256), index=True)
+  categoryA = db.Column(db.String(256), index=True)
+  categoryB = db.Column(db.String(256), index=True)
+  labels = db.relationship("Label", backref='classifier', lazy=True)
+
+class Label(db.Model):
+  #__tablename__ = "label"
+  id = db.Column(db.Integer, primary_key=True)
+  classifier_id = db.Column(db.Integer, db.ForeignKey('classifier.id'), nullable=False)
+  artwork_id = db.Column(db.Integer, db.ForeignKey('artwork.id'), nullable=False)
+
 
 db.create_all()
 
 @app.route('/')
 def index():
-    sessionID = secrets.token_hex(16)
-    return render_template('iml_table.html',
+  classifier_code = secrets.token_hex(8)
+  classifier = Classifier(classifier_code = classifier_code)
+  db.session.add(classifier)
+  db.session.commit()
+  return redirect(url_for('build_classifier', classifier_code = classifier_code))
+  
+
+@app.route('/build_classifier')
+def build_classifier():
+  classifier_code = request.args['classifier_code']
+  return render_template('iml_table.html',
                            title='Art Description Classification with Interactive Machine Learning',
-                           sessionID=sessionID)
+                           classifier_code = classifier_code)
+
 
 @app.route('/api/data')
 def data():
-    query = Artwork.query
+    classifier_code = request.args['classifier_code']
+    #query = Artwork.query
+    query = Artwork.query.outerjoin(Artwork.labels)
+    #query = query.filter(Label.classifier_code == classifier_code)
 
     # search filter
     search = request.args.get('search[value]')

@@ -25,7 +25,8 @@ wga_df.reset_index(inplace=True, drop=True)
 #####
 
 #Create database for Flask app
-from app import db, Artwork, Classifier, Label
+from app import db, Artwork, Classifier#, Label
+
 
 def create_artwork_database():
   df = wga_df[wga_df['TYPE']=='landscape']
@@ -36,10 +37,11 @@ def create_artwork_database():
   for i in range(len(df)):
     artwork = Artwork(id = ids[i],
                       description = descriptions[i],
-                      labelA = 0,
-                      labelB = 0,
-                      predicted = 0,
-                      hide = 0)
+                      labelA = None,
+                      labelB = None,
+                      predicted = None,
+                      hide = None,
+                      classifier_code='0')
     db.session.add(artwork)
     db.session.commit()
   print(f'Added {len(df)} artworks to the database.') 

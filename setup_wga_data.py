@@ -33,5 +33,5 @@ os.system("rm catalog_with_descriptions.txt")
 os.system("rm wga_catalog_with_descriptions.txt.zip")
 
 # Save to wga_df.csv
-wga_df.to_csv("wga_data.csv")
+wga_df.to_csv("wga_data.csv", sep='\t')
 

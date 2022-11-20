@@ -1,3 +1,4 @@
 .iml_text_venv
 .venv
 wga_data.csv
+db.sqlite

@@ -2,3 +2,4 @@
 .venv
 wga_data.csv
 db.sqlite
+__pycache__/

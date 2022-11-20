@@ -1,0 +1,37 @@
+{% extends "base.html" %}
+
+{% block content %}
+  <table id="data" class="table table-striped">
+    <thead>
+      <tr>
+        <th>ID</th>
+        <th>Description</th>
+        <th>Label A</th>
+        <th>Label B</th>
+        <th>Predicted</th>
+        <th>Hide</th>
+      </tr>
+    </thead>
+    <tbody>
+    </tbody>
+  </table>
+{% endblock %}
+
+{% block scripts %}
+  <script>
+    $(document).ready(function () {
+      $('#data').DataTable({
+        ajax: '/api/data',
+        serverSide: true,
+        columns: [
+          {data: 'id'},
+          {data: 'description'},
+          {data: 'labelA'},
+          {data: 'labelB'},
+          {data: 'predicted'},
+          {data: 'hide'}
+        ],
+      });
+    });
+  </script>
+{% endblock %}§

@@ -26,20 +26,28 @@ class Artwork(db.Model):
   #labels = db.relationship("Label", backref='artwork', lazy=True)
 
   def flip_labelA(self):
+    unset = None
     if self.labelA is None:
       self.labelA = 1 # Set labelA
       if self.labelB is not None:
         self.labelB = None # Unset labelB if set
+        unset = 'B'
     else:
         self.labelA = None # Unset labelA if set
+        unset = 'A'
+    return unset
 
   def flip_labelB(self):
+    unset = None
     if self.labelB is None:
       self.labelB = 1 # Set labelB
       if self.labelA is not None:
         self.labelA = None # Unset labelA if set
+        unset = 'A'
     else:
         self.labelB = None # Unset labelB if set
+        unset = 'B'
+    return unset
 
   def to_dict(self):
     #classifier = db.session.query(Classifier).filter(Artwork.classifier_code == self.classifier_code)
@@ -49,7 +57,7 @@ class Artwork(db.Model):
       'labelA': self.labelA,
       'labelB': self.labelB,
       'predicted': self.predicted,
-      'hide': self.hide,
+      #'hide': self.hide, TODO add this back later
       'classifier_code': self.classifier_code
     }
     return h
@@ -94,24 +102,32 @@ def index():
 def check_label():
   if request.method == 'POST':
     data = request.get_json()
+    classifier_code = data['classifier_code']
+    artwork_id = int(data['id'][1:])
+    label = data['id'][0]
 
     # Load the Artwork object that was labeled
-    query = db.session.query(Artwork).filter(Artwork.classifier_code == data['classifier_code'], Artwork.id == data['artwork_id'])
+    query = db.session.query(Artwork).filter(Artwork.classifier_code == classifier_code, Artwork.id == artwork_id)
     artwork =  [artwork for artwork in query][0]
     print(f"Artwork ID: {artwork.id}")
 
     # flip the label that was clicked on
     # Then check the other label and turn it off if they're both on now (can't both be on)
-    if data['label'] == 'A':
-      artwork.flip_labelA()
+    if label == 'A':
+      unset = artwork.flip_labelA()
       db.session.commit()
-    if data['label'] == 'B':
-      artwork.flip_labelB()
+    if label == 'B':
+      unset = artwork.flip_labelB()
       db.session.commit()
 
     # Update that artwork in the database
     #db.session.update(artwork)
-    return jsonify(artwork)
+
+    h = artwork.to_dict()
+    if unset is not None:
+      h['unset'] = unset
+    return jsonify(h)
+    #return redirect(url_for('build_classifier', classifier_code = classifier_code))
 
 
 @app.route('/build_classifier')

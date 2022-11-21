@@ -27,65 +27,78 @@
         for (let i = 1; i < $('tr').length; i++) {
           tds = $('tr')[i].children
 
-	  // Checkbox for labelA
-          var checkboxA = document.createElement('input');
-          checkboxA.type = 'checkbox';
-          checkboxA.id = 'labelA_'.concat(i);
-          checkboxA.value = tds[0].textContent;
-          if (tds[2].textContent == 1) {
-	    checkboxA.checked=true;
-	    tds[2].textContent = '';
-	  }
-	  checkboxA.onclick = function() {
-            console.log(this.id);
-            classifier_code = new URL(window.location.href).searchParams.get("classifier_code")
-            ajax_string = '/api/data?classifier_code='.concat(classifier_code)
-            //$.ajax({
-            //    type: "POST",
-            //    url: ajax_string,
-            //   data: {mydata:"emailNotification"},
-            //    success: function(data) {
-            //        alert('it worked');
-            //        $('#container').html(data);
-            //    },
-            //     error: function() {
-            //        alert('it broke');
-            //    },
-            //    complete: function() {
-            //        alert('it completed');
-            //    }
-            //});
+          // don't run this code if there are no rows drawn
+	  if (tds.length == $('tr')[0].children.length) {
+	    // Checkbox for labelA
+            var checkboxA = document.createElement('input');
+            checkboxA.type = 'checkbox';
+            checkboxA.id = 'labelA_'.concat(i);
+            checkboxA.value = tds[0].textContent;
+            if (tds[2].textContent == 1) {
+	      checkboxA.checked=true;
+	      tds[2].textContent = '';
+	    }
+	    checkboxA.onclick = function() {
+              classifier_code = new URL(window.location.href).searchParams.get("classifier_code")
+              var jsondata = JSON.stringify({
+                "classifier_code": classifier_code,
+                "artwork_id": checkboxA.value,
+	        "label": "A"
+              });
+              $('input:checkbox').prop('disabled', true);
+              $('button').attr('disabled', true)
+              $.ajax({
+                  type: "POST",
+                  url: "check_label",
+                  data: jsondata,
+	          contentType: "application/json",
+	          dataType: 'json',
+                  //success: function(data) {
+                  //    alert('it worked');
+                  //    $('#container').html(data);
+                  //},
+                  // error: function() {
+                  //    alert('it broke');
+                  //},
+                  complete: function() {
+                    $('input:checkbox').prop('disabled', false);
+                    $('button').attr('disabled', false)
+                    //alert('it completed');
+                  }
+              });
+            }
+            tds[2].appendChild(checkboxA);
+
+	    // Checkbox for labelB
+	    var checkboxB = document.createElement('input');
+	    checkboxB.type = 'checkbox';
+	    checkboxB.id = 'labelB_'.concat(i);
+	    checkboxB.value = tds[0].textContent
+            if (tds[3].textContent == 1) {
+	      checkboxB.checked=true;
+	      tds[3].textContent = '';
+	    }
+	    tds[3].appendChild(checkboxB);
+
+	    // button / icon for 'Hide'
+	    var button_icon = document.createElement('button');
+	    button_icon.classList.add("btn");
+	    var hide_icon = document.createElement('i');
+	    hide_icon.classList.add('bi');
+	    hide_icon.classList.add('bi-eye-slash');
+	    button_icon.appendChild(hide_icon);
+	    tds[5].appendChild(button_icon);
           }
-          tds[2].appendChild(checkboxA);
-
-	  // Checkbox for labelB
-	  var checkboxB = document.createElement('input');
-	  checkboxB.type = 'checkbox';
-	  checkboxB.id = 'labelB_'.concat(i);
-	  checkboxB.value = tds[0].textContent
-          if (tds[3].textContent == 1) {
-	    checkboxB.checked=true;
-	    tds[3].textContent = '';
-	  }
-	  tds[3].appendChild(checkboxB);
-
-	  // button / icon for 'Hide'
-	  var button_icon = document.createElement('button');
-	  button_icon.classList.add("btn");
-	  var hide_icon = document.createElement('i');
-	  hide_icon.classList.add('bi');
-	  hide_icon.classList.add('bi-eye-slash');
-	  button_icon.appendChild(hide_icon);
-	  tds[5].appendChild(button_icon);
 	}
     }
+
 
     $(document).ready(function() {
       classifier_code = new URL(window.location.href).searchParams.get("classifier_code")
       ajax_string = '/api/data?classifier_code='.concat(classifier_code)
       $('#data').DataTable({
         "initComplete": function(settings, json) {
-          modify_table();
+         5+3;//  modify_table(); call on 'draw' instead
         },
         ajax: ajax_string,
         serverSide: true,
@@ -100,5 +113,9 @@
       });
       // 1. Add checkboxes to the table for LabelA, LabelB, and Hide
     });
+
+    $('#data').on( 'draw.dt', function () {
+      modify_table();
+    })
   </script>
 {% endblock %}§

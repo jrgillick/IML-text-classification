@@ -1,5 +1,5 @@
 from flask import Flask, render_template, request
-from flask import redirect, url_for
+from flask import redirect, url_for, jsonify
 from flask_sqlalchemy import SQLAlchemy
 import secrets
 
@@ -24,6 +24,22 @@ class Artwork(db.Model):
   hide = db.Column(db.Integer, index=True)
   classifier_code = db.Column(db.String(64), nullable=False)
   #labels = db.relationship("Label", backref='artwork', lazy=True)
+
+  def flip_labelA(self):
+    if self.labelA is None:
+      self.labelA = 1 # Set labelA
+      if self.labelB is not None:
+        self.labelB = None # Unset labelB if set
+    else:
+        self.labelA = None # Unset labelA if set
+
+  def flip_labelB(self):
+    if self.labelB is None:
+      self.labelB = 1 # Set labelB
+      if self.labelA is not None:
+        self.labelA = None # Unset labelA if set
+    else:
+        self.labelB = None # Unset labelB if set
 
   def to_dict(self):
     #classifier = db.session.query(Classifier).filter(Artwork.classifier_code == self.classifier_code)
@@ -74,6 +90,29 @@ def index():
     db.session.commit()
   return redirect(url_for('build_classifier', classifier_code = classifier_code))
   
+@app.route('/check_label', methods=['GET', 'POST'])
+def check_label():
+  if request.method == 'POST':
+    data = request.get_json()
+
+    # Load the Artwork object that was labeled
+    query = db.session.query(Artwork).filter(Artwork.classifier_code == data['classifier_code'], Artwork.id == data['artwork_id'])
+    artwork =  [artwork for artwork in query][0]
+    print(f"Artwork ID: {artwork.id}")
+
+    # flip the label that was clicked on
+    # Then check the other label and turn it off if they're both on now (can't both be on)
+    if data['label'] == 'A':
+      artwork.flip_labelA()
+      db.session.commit()
+    if data['label'] == 'B':
+      artwork.flip_labelB()
+      db.session.commit()
+
+    # Update that artwork in the database
+    #db.session.update(artwork)
+    return jsonify(artwork)
+
 
 @app.route('/build_classifier')
 def build_classifier():

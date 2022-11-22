@@ -26,7 +26,7 @@ torch.backends.cudnn.deterministic = True
 
 #Check GPU/CPU device
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-print("Running on {}".format(device))
+#print("Running on {}".format(device))
 
 #Load tokenizer and pretrained BERT model from Huggingface
 tokenizer = BertTokenizerFast.from_pretrained('bert-base-cased', do_lower_case=False, do_basic_tokenize=False)
@@ -104,7 +104,7 @@ def trainSentenceClassifier(sentences1, sentences2, category1, category2, bert_s
       if sentence not in bert_sentence_embeddings:
         embedding = get_bert_text_embedding(sentence).squeeze().detach().numpy()
         bert_sentence_embeddings[sentence] = embedding
-    print(f"Computed missing embeddings in {time.time()-t0} seconds")
+    #print(f"Computed missing embeddings in {time.time()-t0} seconds")
 
     t0 = time.time()
     training = makeSentenceTrainingSet(sentences1, sentences2, category1, category2, bert_sentence_embeddings)
@@ -122,7 +122,7 @@ def testSentenceClassifier(testsentences, knn, bert_sentence_embeddings):
       if sentence not in bert_sentence_embeddings:
         embedding = get_bert_text_embedding(sentence).squeeze().detach().numpy()
         bert_sentence_embeddings[sentence] = embedding
-    print(f"Computed missing embeddings in {time.time()-t0} seconds")
+    #print(f"Computed missing embeddings in {time.time()-t0} seconds")
 
     testdf = makeSentenceTestDF(testsentences, bert_sentence_embeddings)
     preds = knn.predict(testdf)

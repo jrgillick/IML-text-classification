@@ -65,14 +65,9 @@ def get_batch_bert_embeddings(text_list, batch_size):
 #### Modeling Stuff
 
 
-def makeSentenceDF(sentence_list, c, SearchWord=None, feature='bert_text_embedding'):
-    
-    #vector_list = [model[word] for word in words if model.has_index_for(word)]
-    if feature == 'bert_text_embedding':
-      vector_list = [get_bert_text_embedding(sentence).squeeze().detach().numpy() for sentence in sentence_list]
-    elif feature == 'bert_word_embedding':
-      vector_list = [get_bert_word_embedding(sentence, SearchWord).squeeze().detach().numpy() for sentence in sentence_list]
-
+def makeSentenceDF(sentence_list, category, bert_sentence_embeddings):
+    vector_list = [bert_sentence_embeddings[key] for key in sentence_list]]
+ 
     # Zip the sentences together with their vector representations
     word_vec_zip = zip(sentence_list, vector_list)
 
@@ -80,14 +75,11 @@ def makeSentenceDF(sentence_list, c, SearchWord=None, feature='bert_text_embeddi
     word_vec_dict = dict(word_vec_zip)
     df = pd.DataFrame.from_dict(word_vec_dict, orient='index')
     
-    df2 = df.assign(label=c)
+    df2 = df.assign(label=category)
     return df2
 
-def makeSentenceTestDF(test_sentence_list, SearchWord=None, feature='bert_text_embedding'):
-    if feature == 'bert_text_embedding':
-      vector_list = [get_bert_text_embedding(sentence).squeeze().detach().numpy() for sentence in test_sentence_list]
-    elif feature == 'bert_word_embedding':
-      vector_list = [get_bert_word_embedding(sentence, SearchWord).squeeze().detach().numpy() for sentence in test_sentence_list]
+def makeSentenceTestDF(test_sentence_list, bert_sentence_embeddings):
+    vector_list = [bert_sentence_embeddings[key] for key in sentence_list]]
 
     # Zip the words together with their vector representations
     word_vec_zip = zip(test_sentence_list, vector_list)
@@ -97,22 +89,22 @@ def makeSentenceTestDF(test_sentence_list, SearchWord=None, feature='bert_text_e
     df = pd.DataFrame.from_dict(word_vec_dict, orient='index')
     return df
 
-def makeSentenceTrainingSet(sentences1, sentences2, category1, category2, SearchWord=None, feature='bert_text_embedding'):
-    df1 = makeSentenceDF(sentences1, category1, SearchWord, feature)
-    df2 = makeSentenceDF(sentences2, category2, SearchWord, feature)
+def makeSentenceTrainingSet(sentences1, sentences2, category1, category2, bert_sentence_embeddings):
+    df1 = makeSentenceDF(sentences1, category1)
+    df2 = makeSentenceDF(sentences2, category2)
     frames = [df1, df2]
     df = pd.concat(frames)
     return df
 
-def testSentenceClassifier(sentences1, sentences2, testsentences, k, category1, category2, SearchWord=None, feature='bert_text_embedding'):
+def testSentenceClassifier(sentences1, sentences2, testsentences, category1, category2, bert_sentence_embeddings, k=3):
     # feature can be 'bert_word_embedding' or 'bert_text_embedding'
-    training = makeSentenceTrainingSet(sentences1, sentences2, category1, category2, SearchWord, feature)
+    training = makeSentenceTrainingSet(sentences1, sentences2, category1, category2, bert_sentence_embeddings)
     knn = KNeighborsClassifier(n_neighbors=k)
     X = training.drop(['label'], axis=1)
     y = training['label']
     knn.fit(X, y)
 
-    testdf = makeSentenceTestDF(testsentences, SearchWord, feature)
+    testdf = makeSentenceTestDF(testsentences)
     preds = knn.predict(testdf)
     
     data = {'Sentence':testdf.index,

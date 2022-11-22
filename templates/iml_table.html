@@ -1,13 +1,27 @@
 {% extends "base.html" %}
 
 {% block content %}
+  <h2> Name Your Categories </h2>
+
+  <form>
+  <div style="float:left;">
+  <input type="text" size="50" id="categoryAName" placeholder="Category A..." style="color:blue; margin-right: 50px;"><br>
+  </div>
+  <div>
+  <input type="text" size="50" id="categoryBName" placeholder="Category B..." style="color:orange;"><br><br>
+  </div>
+  </form>
+  
+  <hr>
+
+  <h2> Build a Classifier </h2>
   <table id="data" class="table table-striped">
     <thead>
       <tr>
         <th>ID</th>
         <th>Description</th>
-        <th>Label A</th>
-        <th>Label B</th>
+        <th>Label as A</th>
+        <th>Label as B</th>
         <th>Predicted</th>
         <!--<th>Hide</th>-->  <!--TODO add this back later-->
       </tr>
@@ -103,6 +117,7 @@
       classifier_code = new URL(window.location.href).searchParams.get("classifier_code")
       ajax_string = '/api/data?classifier_code='.concat(classifier_code)
       $('#data').DataTable({
+        "pageLength": 50,
         "initComplete": function(settings, json) {
          5+3;//  do nothing here. modify_table(); call on 'draw' instead
         },

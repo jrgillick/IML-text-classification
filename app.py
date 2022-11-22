@@ -92,8 +92,8 @@ def index():
   # Create data for this new classifier
   for i, art in enumerate(initial_artworks):
     new_artwork = Artwork(description = art['description'], labelA = None, labelB = None, predicted = None, hide = None, classifier_code = classifier_code)
-    if i == 0: new_artwork.labelA = 1
-    if i == 1: new_artwork.labelB = 1
+    #if i == 0: new_artwork.labelA = 1
+    #if i == 1: new_artwork.labelB = 1
     db.session.add(new_artwork)
     db.session.commit()
   return redirect(url_for('build_classifier', classifier_code = classifier_code))
@@ -134,7 +134,7 @@ def check_label():
 def build_classifier():
   classifier_code = request.args['classifier_code']
   return render_template('iml_table.html',
-                           title='Build a Classifier',
+                           title='Art Description Classification',
                            classifier_code = classifier_code)
 
 

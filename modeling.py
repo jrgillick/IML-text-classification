@@ -97,7 +97,7 @@ def makeSentenceTrainingSet(sentences1, sentences2, category1, category2, bert_s
     df = pd.concat(frames)
     return df
 
-def trainSentenceClassifier(sentences1, sentences2, category1, category2, bert_sentence_embeddings, k=1):
+def trainSentenceClassifier(sentences1, sentences2, category1, category2, bert_sentence_embeddings, k=3):
     # get embeddings if any are missing
     t0 = time.time()
     for sentence in sentences1 + sentences2:
@@ -133,28 +133,6 @@ def testSentenceClassifier(testsentences, knn, bert_sentence_embeddings):
     # Create DataFrame
     t = pd.DataFrame(data)
     return t
-
-"""
-def testSentenceClassifier(sentences1, sentences2, testsentences, category1, category2, bert_sentence_embeddings,2k=3):
-    training = makeSentenceTrainingSet(sentences1, sentences2, category1, category2, bert_sentence_embeddings)
-    knn = KNeighborsClassifier(n_neighbors=k)
-    X = training.drop(['label'], axis=1)
-    y = training['label']
-    knn.fit(X, y)
-
-    testdf = makeSentenceTestDF(testsentences)
-    preds = knn.predict(testdf)
-    
-    data = {'Sentence':testdf.index,
-        'Predicted':preds}
-  
-    # Create DataFrame
-    t = pd.DataFrame(data)
-    return t
-"""
-
-
-
 
 
 #### Spacy for sentence splitting

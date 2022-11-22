@@ -74,8 +74,8 @@ class Classifier(db.Model):
   classifier_code = db.Column(db.String(256), index=True)
   categoryA = db.Column(db.String(256), index=True)
   categoryB = db.Column(db.String(256), index=True)
-  categoryAName = db.Column(db.String(256), index=True)
-  categoryBName = db.Column(db.String(256), index=True)
+  categoryAName = db.Column(db.Text(256), index=True)
+  categoryBName = db.Column(db.Text(256), index=True)
   custom_count = db.Column(db.Integer, index=True)
   #labels = db.relationship("Label", backref='classifier', lazy=True)
 
@@ -89,7 +89,7 @@ class Classifier(db.Model):
     query = db.session.query(Artwork).filter(Artwork.classifier_code == self.classifier_code, Artwork.labelB == 1)
     return [artwork.description for artwork in query]
 
-  def train_model(self, k=1):
+  def train_model(self, k=3):
     knn = modeling.trainSentenceClassifier(self.sentencesA(), self.sentencesB(), self.categoryA, self.categoryB, bert_sentence_embeddings, k=3)
     self.knn = knn
 
@@ -313,4 +313,4 @@ def data():
 
 
 if __name__ == '__main__':
-    app.run(debug=True)
+    app.run()

@@ -27,6 +27,7 @@
   <div> 
     <div id="customPrediction" style="display:none; margin-top:10px;"> Predicted category for this text: </div> 
     <div id="customPredictionResult" style="display:none; margin-top:10px;">  </div>
+    <div id="pleaseWait" style="display:none; margin-top:10px;">  Making predictions. This may take a few seconds... </div>
   </div>
   </input>
   <hr>
@@ -54,7 +55,7 @@
 {% block scripts %}
   <script>
     function modify_table() {
-      console.log("Add to table...");
+      //console.log("Add to table...");
       // 1. Add checkboxes to the table for LabelA, LabelB, and Hide
       // 2. Make checkboxes checked or unchecked depending on the value of the relevant <td>
       //get all table rows and loop through skipping the first - there's one extra
@@ -100,6 +101,7 @@
 	    //tds[5].appendChild(button_icon.cloneNode());
           }
 	}
+
         // add onclicks
         checkboxes = $('input:checkbox')
 	classifier_code = new URL(window.location.href).searchParams.get("classifier_code")
@@ -130,6 +132,23 @@
 	  }
 	}
         //end add onclicks
+        for (let i = 1; i < $('tr').length; i++) {
+          tds = $('tr')[i].children
+
+          // don't run this code if there are no rows drawn
+          if (tds.length == $('tr')[0].children.length) {
+
+	    if (tds[4].textContent == 'A') {
+	      tds[4].style.color='blue'	
+	    }
+
+	    if (tds[4].textContent == 'B') {
+	     tds[4].style.color='orange'	
+            }
+          }
+        }
+
+        //End Color-code the predictions
     }
 
 
@@ -191,6 +210,8 @@
     });
     $('input:checkbox').prop('disabled', true);
     $('button').attr('disabled', true)
+    var pleaseWait= document.getElementById("pleaseWait");
+    pleaseWait.style.display = 'block';
     $.ajax({
       type: "POST",
       url: "update_all_predictions",
@@ -200,6 +221,8 @@
       success: function(response) {
             //$('input:checkbox').prop('disabled', false);
             //$('button').attr('disabled', false)
+            var pleaseWait= document.getElementById("pleaseWait");
+            pleaseWait.style.display = 'none';
 	    location.reload();
       }
     });

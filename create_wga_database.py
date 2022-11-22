@@ -36,7 +36,7 @@ def compute_and_save_bert_embeddings(sentences, embeddings_file):
   import time
   t0 = time.time()
   for sentence in tqdm(sentences):
-    embedding = modeling.get_bert_text_embedding(s).squeeze().detach().numpy()
+    embedding = modeling.get_bert_text_embedding(sentence).squeeze().detach().numpy()
     bert_sentence_embeddings[sentence] = embedding
   print(time.time()-t0)
   with open(embeddings_file, 'wb') as f:
@@ -45,7 +45,7 @@ def compute_and_save_bert_embeddings(sentences, embeddings_file):
 def create_artwork_database():
   df = wga_df[wga_df['TYPE']=='still-life']
   df.reset_index(inplace=True, drop=True) 
-  df = df[0:300]
+  df = df[0:200]
   ids = list(df.index)
   descriptions = list(df.text_description_sentences)
   compute_and_save_bert_embeddings(descriptions, embeddings_file='bert_sentence_embeddings.pkl')

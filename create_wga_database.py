@@ -1,4 +1,6 @@
 import pandas as pd
+from tqdm import tqdm
+import pickle
 
 ##### pre-processing just for purposes of this demo: # only keep the images with 1-sentence text descriptions
 wga_df = pd.read_csv("wga_data.csv", sep="\t", na_filter=False)
@@ -26,16 +28,30 @@ wga_df.reset_index(inplace=True, drop=True)
 
 #Create database for Flask app
 from app import db, Artwork, Classifier#, Label
+import modeling 
 
+
+def compute_and_save_bert_embeddings(sentences, embeddings_file):
+  bert_sentence_embeddings = {}
+  import time
+  t0 = time.time()
+  for sentence in tqdm(sentences):
+    embedding = modeling.get_bert_text_embedding(s).squeeze().detach().numpy()
+    bert_sentence_embeddings[sentence] = embedding
+  print(time.time()-t0)
+  with open(embeddings_file, 'wb') as f:
+    pickle.dump(bert_sentence_embeddings, f)
 
 def create_artwork_database():
   df = wga_df[wga_df['TYPE']=='landscape']
   df.reset_index(inplace=True, drop=True) 
-  df = df[0:200]
+  df = df[0:500]
   ids = list(df.index)
   descriptions = list(df.text_description_sentences)
+  compute_and_save_bert_embeddings(descriptions, embeddings_file='bert_sentence_embeddings.pkl')
   for i in range(len(df)):
-    artwork = Artwork(id = ids[i],
+    artwork = Artwork(unique_id = ids[i],
+                      id = ids[i],
                       description = descriptions[i],
                       labelA = None,
                       labelB = None,

@@ -3,3 +3,4 @@
 wga_data.csv
 db.sqlite
 __pycache__/
+bert_sentence_embeddings.pkl

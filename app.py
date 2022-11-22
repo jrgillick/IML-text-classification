@@ -11,12 +11,17 @@ db = SQLAlchemy(app)
 from sqlalchemy import Column, ForeignKey, Integer, Table
 from sqlalchemy.orm import relationship
 
-
-
+import pickle, os
+import modeling
+if os.path.exists('bert_sentence_embeddings.pkl'):
+  with open('bert_sentence_embeddings.pkl', 'rb') as f:
+    bert_sentence_embeddings = pickle.load(f)
+  print(len(bert_sentence_embeddings))
 
 class Artwork(db.Model):
   #__tablename__ = "artwork"
-  id = db.Column(db.Integer, primary_key=True)
+  unique_id = db.Column(db.Integer, primary_key=True)
+  id = db.Column(db.Integer, index=True)
   description = db.Column(db.String(512), index=True)
   labelA = db.Column(db.String(256), index=True)
   labelB = db.Column(db.String(256), index=True)
@@ -91,7 +96,7 @@ def index():
 
   # Create data for this new classifier
   for i, art in enumerate(initial_artworks):
-    new_artwork = Artwork(description = art['description'], labelA = None, labelB = None, predicted = None, hide = None, classifier_code = classifier_code)
+    new_artwork = Artwork(id=art['id'], description = art['description'], labelA = None, labelB = None, predicted = None, hide = None, classifier_code = classifier_code)
     #if i == 0: new_artwork.labelA = 1
     #if i == 1: new_artwork.labelB = 1
     db.session.add(new_artwork)
@@ -134,7 +139,7 @@ def check_label():
 def build_classifier():
   classifier_code = request.args['classifier_code']
   return render_template('iml_table.html',
-                           title='Art Description Classification',
+                           title='Classifying Artwork Descriptions',
                            classifier_code = classifier_code)
 
 

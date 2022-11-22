@@ -97,7 +97,7 @@ def makeSentenceTrainingSet(sentences1, sentences2, category1, category2, bert_s
     df = pd.concat(frames)
     return df
 
-def trainSentenceClassifier(sentences1, sentences2, category1, category2, bert_sentence_embeddings, k=2):
+def trainSentenceClassifier(sentences1, sentences2, category1, category2, bert_sentence_embeddings, k=1):
     # get embeddings if any are missing
     t0 = time.time()
     for sentence in sentences1 + sentences2:

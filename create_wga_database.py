@@ -43,9 +43,9 @@ def compute_and_save_bert_embeddings(sentences, embeddings_file):
     pickle.dump(bert_sentence_embeddings, f)
 
 def create_artwork_database():
-  df = wga_df[wga_df['TYPE']=='landscape']
+  df = wga_df[wga_df['TYPE']=='still-life']
   df.reset_index(inplace=True, drop=True) 
-  df = df[0:50]
+  df = df[0:300]
   ids = list(df.index)
   descriptions = list(df.text_description_sentences)
   compute_and_save_bert_embeddings(descriptions, embeddings_file='bert_sentence_embeddings.pkl')
@@ -61,7 +61,7 @@ def create_artwork_database():
     db.session.add(artwork)
     db.session.commit()
   print(f'Added {len(df)} artworks to the database.') 
-  classifier = Classifier(id=0, classifier_code='qwertyqwe', categoryA='AAA', categoryB='BBB', custom_count=0)
+  classifier = Classifier(id=0, classifier_code='qwertyqwe', categoryA='A', categoryB='B', categoryAName='A', categoryBName='B', custom_count=0)
   db.session.add(classifier)
     
 

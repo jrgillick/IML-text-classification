@@ -12,6 +12,7 @@ from sqlalchemy import Column, ForeignKey, Integer, Table
 from sqlalchemy.orm import relationship
 
 import pickle, os
+from tqdm import tqdm
 import modeling
 if os.path.exists('bert_sentence_embeddings.pkl'):
   with open('bert_sentence_embeddings.pkl', 'rb') as f:
@@ -73,6 +74,8 @@ class Classifier(db.Model):
   classifier_code = db.Column(db.String(256), index=True)
   categoryA = db.Column(db.String(256), index=True)
   categoryB = db.Column(db.String(256), index=True)
+  categoryAName = db.Column(db.String(256), index=True)
+  categoryBName = db.Column(db.String(256), index=True)
   custom_count = db.Column(db.Integer, index=True)
   #labels = db.relationship("Label", backref='classifier', lazy=True)
 
@@ -86,7 +89,7 @@ class Classifier(db.Model):
     query = db.session.query(Artwork).filter(Artwork.classifier_code == self.classifier_code, Artwork.labelB == 1)
     return [artwork.description for artwork in query]
 
-  def train_model(self, k=2):
+  def train_model(self, k=1):
     knn = modeling.trainSentenceClassifier(self.sentencesA(), self.sentencesB(), self.categoryA, self.categoryB, bert_sentence_embeddings, k=3)
     self.knn = knn
 
@@ -121,6 +124,75 @@ def index():
     db.session.add(new_artwork)
     db.session.commit()
   return redirect(url_for('build_classifier', classifier_code = classifier_code))
+
+@app.route('/update_categoryA_name', methods=['GET', 'POST'])
+def update_categoryA_name():
+  data = request.get_json()
+
+  #get classifier object
+  query = db.session.query(Classifier).filter(Classifier.classifier_code == data['classifier_code'])
+  classifier = [classifier for classifier in query][0]
+  
+  #update name
+  classifier.categoryAName = data['categoryAName']
+  #save to db
+  db.session.commit()
+  return jsonify({'categoryAName':classifier.categoryAName})
+
+@app.route('/update_categoryB_name', methods=['GET', 'POST'])
+def update_categoryB_name():
+  data = request.get_json()
+
+  #get classifier object
+  query = db.session.query(Classifier).filter(Classifier.classifier_code == data['classifier_code'])
+  classifier = [classifier for classifier in query][0]
+  
+  #update name
+  classifier.categoryBName = data['categoryBName']
+  #save to db
+  db.session.commit()
+  return jsonify({'categoryBName':classifier.categoryBName})
+
+@app.route('/update_all_predictions', methods=['GET', 'POST'])
+def update_all_predictions():
+  data = request.get_json()
+
+  #get classifier object
+  query = db.session.query(Classifier).filter(Classifier.classifier_code == data['classifier_code'])
+  classifier = [classifier for classifier in query][0]
+
+  #train KNN
+  classifier.train_model()
+  knn = classifier.knn
+
+  #make predictions
+  query = db.session.query(Artwork).filter(Artwork.classifier_code == data['classifier_code'])
+  artworks =  [artwork for artwork in query]
+
+  for artwork in tqdm(artworks):
+    artwork.predicted = modeling.testSentenceClassifier([artwork.description], knn, bert_sentence_embeddings).Predicted[0]
+
+  db.session.commit()
+  return jsonify({})
+
+@app.route('/make_custom_prediction', methods=['GET', 'POST'])
+def make_custom_prediction():
+  data = request.get_json()
+
+  #get classifier object
+  query = db.session.query(Classifier).filter(Classifier.classifier_code == data['classifier_code'])
+  classifier = [classifier for classifier in query][0]
+
+  #train KNN
+  classifier.train_model()
+  knn = classifier.knn
+
+  #make prediction
+  testsentences = [data['custom_text']]
+  preds = modeling.testSentenceClassifier(testsentences, knn, bert_sentence_embeddings)
+  predicted_category = preds.Predicted[0]
+  return jsonify({'predicted_category': predicted_category})
+
 
 @app.route('/add_custom_text', methods=['GET', 'POST'])
 def add_custom_text():
@@ -181,9 +253,13 @@ def check_label():
 @app.route('/build_classifier')
 def build_classifier():
   classifier_code = request.args['classifier_code']
+  #get classifier object
+  query = db.session.query(Classifier).filter(Classifier.classifier_code == classifier_code)
+  classifier = [classifier for classifier in query][0]
+
   return render_template('iml_table.html',
                            title='Classifying Artwork Descriptions',
-                           classifier_code = classifier_code)
+                           classifier_code = classifier_code, categoryAName=classifier.categoryAName, categoryBName=classifier.categoryBName)
 
 
 @app.route('/api/data')

@@ -5,10 +5,10 @@
 
   <form>
   <div style="float:left;">
-  <input type="text" size="50" id="categoryAName" placeholder="Category A..." style="color:blue; margin-right: 50px;"></input><br>
+    <input type="text" size="50" id="categoryAName" placeholder="Category A..." style="color:blue; margin-right: 50px;" value= {{categoryAName or ''}}> </input><br>
   </div>
   <div>
-  <input type="text" size="50" id="categoryBName" placeholder="Category B..." style="color:orange;"></input><br><br>
+  <input type="text" size="50" id="categoryBName" placeholder="Category B..." style="color:orange;" value= {{categoryBName or ''}}></input><br><br>
   </div>
   </form>
   
@@ -23,7 +23,16 @@
   </script>
   <button value="A" onclick="addCustomTextWithLabel(this.value)" id="addWithLabelA" type="button"  style="color:blue; margin-right: 25px;"> Add With Label A  </button>
   <button value="B" onclick="addCustomTextWithLabel(this.value)" id="addWithLabelB" type="button"  style="color:orange; margin-right: 25px;"> Add With Label B</button>
-  <button id="makePredictionForThisText" type="button"  style="margin-right: 25px;"> Make Prediction for this Text </button>
+  <button onclick = "makePredictionForThisText()" id="makePredictionForThisText" type="button"  style="margin-right: 25px; margin-bottom: 5px;"> Make Prediction for this Text </button>
+  <div> 
+    <div id="customPrediction" style="display:none; margin-top:10px;"> Predicted category for this text: </div> 
+    <div id="customPredictionResult" style="display:none; margin-top:10px;">  </div>
+  </div>
+  </input>
+  <hr>
+
+  <button onclick = "updateAllPredictions()" id="updateAllPredictions" type="button"  style="btn; margin-right: 25px; margin-bottom: 5px;"> Update All Predictions </button>
+
   <hr>
 
   <table id="data" class="table table-striped">
@@ -167,16 +176,104 @@
       contentType: "application/json",
       dataType: 'json',
       success: function(response) {
+            //$('input:checkbox').prop('disabled', false);
+            //$('button').attr('disabled', false)
 	    location.reload();
       }
     });
   }
 
-  function addCustomTextWithLabelB() {
-    var customText = document.getElementById("customTextInput").value;
+  function updateAllPredictions() {
+    classifier_code = new URL(window.location.href).searchParams.get("classifier_code")
+
+    var jsondata = JSON.stringify({
+      "classifier_code": classifier_code,
+    });
+    $('input:checkbox').prop('disabled', true);
+    $('button').attr('disabled', true)
+    $.ajax({
+      type: "POST",
+      url: "update_all_predictions",
+      data: jsondata,
+      contentType: "application/json",
+      dataType: 'json',
+      success: function(response) {
+            //$('input:checkbox').prop('disabled', false);
+            //$('button').attr('disabled', false)
+	    location.reload();
+      }
+    });
   }
-  function makePredictionForCustomText() {
-    var customText = document.getElementById("customTextInput").value;
+
+  function makePredictionForThisText() {
+    classifier_code = new URL(window.location.href).searchParams.get("classifier_code")
+    var custom_text = document.getElementById("customTextInput").value;
+    var customPrediction = document.getElementById("customPrediction");
+    var customPredictionResult = document.getElementById("customPredictionResult");
+    customPrediction.style.display = 'none';
+    customPredictionResult.style.display = 'none';
+    var jsondata = JSON.stringify({
+      "classifier_code": classifier_code,
+      "custom_text": custom_text
+    });
+    $.ajax({
+      type: "POST",
+      url: "make_custom_prediction",
+      data: jsondata,
+      contentType: "application/json",
+      dataType: 'json',
+      success: function(response) {
+        var customPrediction = document.getElementById("customPrediction");
+        var customPredictionResult = document.getElementById("customPredictionResult");
+	customPrediction.style.display = 'block';
+	customPredictionResult.style.display = 'block';
+	if (response['predicted_category'] == 'A') {
+	  customPredictionResult.style.color = 'blue';
+	  customPredictionResult.textContent = 'A';
+        }
+	if (response['predicted_category'] == 'B') {
+	  customPredictionResult.style.color = 'orange';
+	  customPredictionResult.textContent = 'B';
+        }
+      }
+    });
   }
+
+  $('#categoryAName').on('change', function() {
+    classifier_code = new URL(window.location.href).searchParams.get("classifier_code")
+    var jsondata = JSON.stringify({
+      "classifier_code": classifier_code,
+      "categoryAName": this.value
+    });
+    $.ajax({
+      type: "POST",
+      url: "update_categoryA_name",
+      data: jsondata,
+      contentType: "application/json",
+      dataType: 'json',
+      success: function(response) {
+            console.log(response);
+      }
+    });
+  });
+
+  $('#categoryBName').on('change', function() {
+    classifier_code = new URL(window.location.href).searchParams.get("classifier_code")
+    var jsondata = JSON.stringify({
+      "classifier_code": classifier_code,
+      "categoryBName": this.value
+    });
+    $.ajax({
+      type: "POST",
+      url: "update_categoryB_name",
+      data: jsondata,
+      contentType: "application/json",
+      dataType: 'json',
+      success: function(response) {
+            console.log(response);
+      }
+    });
+  });
+
   </script>
 {% endblock %}§

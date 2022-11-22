@@ -18,8 +18,6 @@ if os.path.exists('bert_sentence_embeddings.pkl'):
     bert_sentence_embeddings = pickle.load(f)
   print(len(bert_sentence_embeddings))
 
-import pdb; pdb.set_trace()
-
 class Artwork(db.Model):
   #__tablename__ = "artwork"
   unique_id = db.Column(db.Integer, primary_key=True)
@@ -78,10 +76,25 @@ class Classifier(db.Model):
   custom_count = db.Column(db.Integer, index=True)
   #labels = db.relationship("Label", backref='classifier', lazy=True)
 
-  def self.sentencesA(self):
+  def sentencesA(self):
     # return desc for all artworks with labelA and this classifier code
-  def self.sentencesB(self):
+    query = db.session.query(Artwork).filter(Artwork.classifier_code == self.classifier_code, Artwork.labelA == 1)
+    return [artwork.description for artwork in query]
+
+  def sentencesB(self):
     # return desc for all artworks with labelB and this classifier code
+    query = db.session.query(Artwork).filter(Artwork.classifier_code == self.classifier_code, Artwork.labelB == 1)
+    return [artwork.description for artwork in query]
+
+  def train_model(self, k=2):
+    knn = modeling.trainSentenceClassifier(self.sentencesA(), self.sentencesB(), self.categoryA, self.categoryB, bert_sentence_embeddings, k=3)
+    self.knn = knn
+
+  def make_prediction(self, text):
+    pass
+
+  def make_all_predictions(self, text):
+    pass
 
 #class Label(db.Model):
 #  #__tablename__ = "label"
@@ -113,7 +126,7 @@ def index():
 def add_custom_text():
   data = request.get_json()
   sentence = data['custom_text']
-  if sentence is '' or sentence is None: return jsonify({})
+  if sentence=='' or sentence is None: return jsonify({})
 
   query = db.session.query(Classifier).filter(Classifier.classifier_code == data['classifier_code'])
   classifier = [classifier for classifier in query][0]

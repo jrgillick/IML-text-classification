@@ -10,6 +10,7 @@ from sklearn.linear_model import RidgeClassifier
 import torch, transformers, torch.nn as nn
 from transformers import BertTokenizer, BertTokenizerFast, BertModel
 
+import time
 from tqdm import tqdm
 import logging
 logger = logging.getLogger()
@@ -66,7 +67,7 @@ def get_batch_bert_embeddings(text_list, batch_size):
 
 
 def makeSentenceDF(sentence_list, category, bert_sentence_embeddings):
-    vector_list = [bert_sentence_embeddings[key] for key in sentence_list]]
+    vector_list = [bert_sentence_embeddings[key] for key in sentence_list]
  
     # Zip the sentences together with their vector representations
     word_vec_zip = zip(sentence_list, vector_list)
@@ -78,11 +79,11 @@ def makeSentenceDF(sentence_list, category, bert_sentence_embeddings):
     df2 = df.assign(label=category)
     return df2
 
-def makeSentenceTestDF(test_sentence_list, bert_sentence_embeddings):
-    vector_list = [bert_sentence_embeddings[key] for key in sentence_list]]
+def makeSentenceTestDF(testsentences, bert_sentence_embeddings):
+    vector_list = [bert_sentence_embeddings[key] for key in testsentences]
 
     # Zip the words together with their vector representations
-    word_vec_zip = zip(test_sentence_list, vector_list)
+    word_vec_zip = zip(testsentences, vector_list)
 
     # Cast to a dict so we can turn it into a DataFrame
     word_vec_dict = dict(word_vec_zip)
@@ -90,14 +91,51 @@ def makeSentenceTestDF(test_sentence_list, bert_sentence_embeddings):
     return df
 
 def makeSentenceTrainingSet(sentences1, sentences2, category1, category2, bert_sentence_embeddings):
-    df1 = makeSentenceDF(sentences1, category1)
-    df2 = makeSentenceDF(sentences2, category2)
+    df1 = makeSentenceDF(sentences1, category1, bert_sentence_embeddings)
+    df2 = makeSentenceDF(sentences2, category2, bert_sentence_embeddings)
     frames = [df1, df2]
     df = pd.concat(frames)
     return df
 
-def testSentenceClassifier(sentences1, sentences2, testsentences, category1, category2, bert_sentence_embeddings, k=3):
-    # feature can be 'bert_word_embedding' or 'bert_text_embedding'
+def trainSentenceClassifier(sentences1, sentences2, category1, category2, bert_sentence_embeddings, k=2):
+    # get embeddings if any are missing
+    t0 = time.time()
+    for sentence in sentences1 + sentences2:
+      if sentence not in bert_sentence_embeddings:
+        embedding = get_bert_text_embedding(sentence).squeeze().detach().numpy()
+        bert_sentence_embeddings[sentence] = embedding
+    print(f"Computed missing embeddings in {time.time()-t0} seconds")
+
+    t0 = time.time()
+    training = makeSentenceTrainingSet(sentences1, sentences2, category1, category2, bert_sentence_embeddings)
+    knn = KNeighborsClassifier(n_neighbors=k)
+    X = training.drop(['label'], axis=1)
+    y = training['label']
+    knn.fit(X, y)
+    print(f"Trained knn in {time.time()-t0} seconds")
+    return knn
+
+def testSentenceClassifier(testsentences, knn, bert_sentence_embeddings):
+    # get embeddings if any are missing
+    t0 = time.time()
+    for sentence in testsentences:
+      if sentence not in bert_sentence_embeddings:
+        embedding = get_bert_text_embedding(sentence).squeeze().detach().numpy()
+        bert_sentence_embeddings[sentence] = embedding
+    print(f"Computed missing embeddings in {time.time()-t0} seconds")
+
+    testdf = makeSentenceTestDF(testsentences, bert_sentence_embeddings)
+    preds = knn.predict(testdf)
+    
+    data = {'Sentence':testdf.index,
+        'Predicted':preds}
+  
+    # Create DataFrame
+    t = pd.DataFrame(data)
+    return t
+
+"""
+def testSentenceClassifier(sentences1, sentences2, testsentences, category1, category2, bert_sentence_embeddings,2k=3):
     training = makeSentenceTrainingSet(sentences1, sentences2, category1, category2, bert_sentence_embeddings)
     knn = KNeighborsClassifier(n_neighbors=k)
     X = training.drop(['label'], axis=1)
@@ -113,6 +151,7 @@ def testSentenceClassifier(sentences1, sentences2, testsentences, category1, cat
     # Create DataFrame
     t = pd.DataFrame(data)
     return t
+"""
 
 
 

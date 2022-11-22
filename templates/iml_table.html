@@ -19,9 +19,11 @@
 
   <input type="text" size="250" id="customTextInput" placeholder="Enter custom text here..." style="width: 560px; height: 75px; margin-bottom: 5px;" >
   </br>
-  <button id="addWithLabelA" type="button"  style="color:blue; margin-right: 25px;"> Add With Label A</button>
-  <button id="addWithLabelB" type="button"  style="color:orange; margin-right: 25px;"> Add With Label B</button>
-  <button id="makePredictionForThisText" type="button"  style="margin-right: 25px;"> Make Prediction for this text </button>
+  <script>
+  </script>
+  <button value="A" onclick="addCustomTextWithLabel(this.value)" id="addWithLabelA" type="button"  style="color:blue; margin-right: 25px;"> Add With Label A  </button>
+  <button value="B" onclick="addCustomTextWithLabel(this.value)" id="addWithLabelB" type="button"  style="color:orange; margin-right: 25px;"> Add With Label B</button>
+  <button id="makePredictionForThisText" type="button"  style="margin-right: 25px;"> Make Prediction for this Text </button>
   <hr>
 
   <table id="data" class="table table-striped">
@@ -147,5 +149,34 @@
     $('#data').on( 'draw.dt', function () {
       modify_table();
     })
+    
+  function addCustomTextWithLabel(a_or_b) {
+    classifier_code = new URL(window.location.href).searchParams.get("classifier_code")
+    var custom_text = document.getElementById("customTextInput").value;
+    var jsondata = JSON.stringify({
+      "classifier_code": classifier_code,
+	   "custom_text": custom_text,
+	   "label": a_or_b 
+    });
+    $('input:checkbox').prop('disabled', true);
+    $('button').attr('disabled', true)
+    $.ajax({
+      type: "POST",
+      url: "add_custom_text",
+      data: jsondata,
+      contentType: "application/json",
+      dataType: 'json',
+      success: function(response) {
+	    location.reload();
+      }
+    });
+  }
+
+  function addCustomTextWithLabelB() {
+    var customText = document.getElementById("customTextInput").value;
+  }
+  function makePredictionForCustomText() {
+    var customText = document.getElementById("customTextInput").value;
+  }
   </script>
 {% endblock %}§
